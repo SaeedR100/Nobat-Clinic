@@ -4,131 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نوبت‌دهی درمانگاه</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap');
-  :root {
-    --bg:#f7f9fc; --card:#fff; --primary:#1a6b8a; --primary-light:#e8f4f8;
-    --accent:#27ae60; --accent-light:#eafaf1; --danger:#e74c3c; --danger-light:#fdf0ee;
-    --admin:#7c3aed; --admin-light:#f3f0ff;
-    --text:#1a2332; --text-mid:#4a5568; --text-soft:#8a9bb0; --border:#e2e8f0;
-    --shadow:0 2px 12px rgba(0,0,0,0.08);
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Vazirmatn',Tahoma,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-
-  /* هدر */
-  header { background:var(--primary); padding:18px 20px; text-align:center; color:white; position:relative; }
-  header h1 { font-size:17px; font-weight:700; }
-  header p { font-size:12px; opacity:.75; margin-top:3px; }
-  .admin-btn { position:absolute; left:14px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.2); border:none; color:white; border-radius:8px; padding:6px 10px; font-size:11px; cursor:pointer; font-family:'Vazirmatn',Tahoma,sans-serif; }
-
-  /* تب‌ها */
-  .tabs { display:flex; background:white; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:10; }
-  .tab { flex:1; padding:14px 8px; text-align:center; font-size:13px; font-weight:600; color:var(--text-soft); cursor:pointer; border-bottom:3px solid transparent; transition:all .2s; }
-  .tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-  .tab.admin-tab { color:var(--admin); }
-  .tab.admin-tab.active { color:var(--admin); border-bottom-color:var(--admin); }
-
-  .page { display:none; padding:16px; }
-  .page.active { display:block; }
-
-  /* کارت پزشک */
-  .doctor-cards { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; }
-  .doctor-card { background:var(--card); border:2px solid var(--border); border-radius:12px; padding:14px 16px; cursor:pointer; transition:all .2s; }
-  .doctor-card.selected { border-color:var(--primary); background:var(--primary-light); }
-  .doctor-name { font-size:14px; font-weight:700; }
-  .doctor-spec { font-size:12px; color:var(--text-soft); margin-top:3px; }
-  .doctor-time { font-size:11px; color:var(--primary); margin-top:6px; font-weight:600; }
-
-  .section-title { font-size:13px; font-weight:700; color:var(--text-mid); margin-bottom:10px; margin-top:4px; }
-
-  /* گرید تاریخ */
-  .date-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:20px; }
-  .date-btn { background:var(--card); border:1.5px solid var(--border); border-radius:10px; padding:10px 6px; text-align:center; cursor:pointer; transition:all .2s; }
-  .date-btn.selected { border-color:var(--primary); background:var(--primary-light); }
-  .date-btn.disabled { opacity:.35; cursor:not-allowed; }
-  .date-btn.friday { background:#fff5f5; border-color:#fecaca; }
-  .date-btn.friday .date-day, .date-btn.friday .date-num { color:#e74c3c; font-weight:700; }
-  .date-day { font-size:11px; color:var(--text-soft); }
-  .date-num { font-size:15px; font-weight:700; margin-top:2px; }
-  .date-month { font-size:10px; color:var(--text-soft); margin-top:1px; }
-
-  /* گرید ساعت */
-  .time-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:20px; }
-  .time-btn { background:var(--card); border:1.5px solid var(--border); border-radius:8px; padding:10px 4px; text-align:center; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; color:var(--text); }
-  .time-btn.selected { border-color:var(--primary); background:var(--primary-light); color:var(--primary); }
-  .time-btn.taken { background:#f5f5f5; color:#ccc; cursor:not-allowed; text-decoration:line-through; font-size:11px; }
-
-  /* فرم */
-  .field { margin-bottom:14px; }
-  label { display:block; font-size:12px; color:var(--text-mid); margin-bottom:6px; font-weight:600; }
-  input { width:100%; border:1.5px solid var(--border); border-radius:10px; padding:12px 14px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:14px; color:var(--text); outline:none; background:white; transition:border-color .2s; }
-  input:focus { border-color:var(--primary); }
-  .btn-primary { width:100%; background:var(--primary); color:white; border:none; border-radius:12px; padding:15px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:15px; font-weight:700; cursor:pointer; margin-top:8px; transition:background .2s; }
-  .btn-primary:hover { background:#155a75; }
-
-  /* باکس موفقیت */
-  .success-box { background:var(--accent-light); border:1.5px solid var(--accent); border-radius:12px; padding:20px; text-align:center; margin-top:16px; display:none; }
-  .success-box.show { display:block; }
-  .success-icon { font-size:36px; margin-bottom:8px; }
-  .success-title { font-size:15px; font-weight:700; color:var(--accent); }
-  .success-info { font-size:13px; color:var(--text-mid); margin-top:8px; line-height:1.9; }
-  .nobat-num { font-size:24px; font-weight:700; color:var(--primary); margin-top:10px; }
-
-  /* لیست */
-  .filter-row { display:flex; gap:8px; margin-bottom:16px; overflow-x:auto; padding-bottom:4px; }
-  .filter-btn { flex-shrink:0; padding:7px 14px; border-radius:20px; border:1.5px solid var(--border); background:white; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:12px; font-weight:600; cursor:pointer; color:var(--text-mid); transition:all .2s; }
-  .filter-btn.active { background:var(--primary); border-color:var(--primary); color:white; }
-  .nobat-item { background:var(--card); border-radius:12px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); display:flex; align-items:center; gap:12px; }
-  .nobat-num-badge { width:36px; height:36px; background:var(--primary-light); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--primary); flex-shrink:0; }
-  .nobat-info { flex:1; }
-  .nobat-patient { font-size:14px; font-weight:700; }
-  .nobat-detail { font-size:11px; color:var(--text-soft); margin-top:3px; line-height:1.6; }
-  .nobat-actions { display:flex; flex-direction:column; gap:6px; }
-  .btn-small { padding:5px 10px; border-radius:6px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:11px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
-  .btn-cancel { background:var(--danger-light); color:var(--danger); }
-  .btn-cancel:hover { background:var(--danger); color:white; }
-  .empty-state { text-align:center; padding:40px 20px; color:var(--text-soft); }
-  .empty-state .icon { font-size:40px; margin-bottom:10px; }
-  .stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-  .stat-box { background:white; border-radius:10px; padding:12px 8px; text-align:center; box-shadow:var(--shadow); }
-  .stat-num { font-size:20px; font-weight:700; color:var(--primary); }
-  .stat-label { font-size:10px; color:var(--text-soft); margin-top:3px; }
-  .divider-line { border:none; border-top:1px solid var(--border); margin:16px 0; }
-
-  /* پنل مدیریت - ورود */
-  .admin-login { max-width:340px; margin:40px auto; background:white; border-radius:16px; padding:32px 24px; box-shadow:var(--shadow); text-align:center; }
-  .admin-login .lock-icon { font-size:48px; margin-bottom:16px; }
-  .admin-login h2 { font-size:16px; font-weight:700; color:var(--admin); margin-bottom:20px; }
-  .admin-login input { border-color:var(--border); margin-bottom:12px; letter-spacing:4px; text-align:center; font-size:18px; }
-  .admin-login input:focus { border-color:var(--admin); }
-  .btn-admin { width:100%; background:var(--admin); color:white; border:none; border-radius:12px; padding:14px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:background .2s; }
-  .btn-admin:hover { background:#6d28d9; }
-  .login-error { color:var(--danger); font-size:12px; margin-top:8px; display:none; }
-
-  /* پنل مدیریت - محتوا */
-  .admin-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
-  .admin-header h2 { font-size:15px; font-weight:700; color:var(--admin); }
-  .btn-logout { background:var(--danger-light); color:var(--danger); border:none; border-radius:8px; padding:6px 12px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:11px; font-weight:600; cursor:pointer; }
-  .admin-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:16px; }
-  .admin-stat { background:var(--admin-light); border-radius:10px; padding:12px 8px; text-align:center; }
-  .admin-stat .num { font-size:22px; font-weight:700; color:var(--admin); }
-  .admin-stat .lbl { font-size:10px; color:var(--text-soft); margin-top:2px; }
-  .search-box { width:100%; border:1.5px solid var(--border); border-radius:10px; padding:10px 14px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:13px; outline:none; margin-bottom:12px; background:white; }
-  .search-box:focus { border-color:var(--admin); }
-  .admin-filter-row { display:flex; gap:8px; margin-bottom:14px; overflow-x:auto; padding-bottom:4px; }
-  .admin-filter-btn { flex-shrink:0; padding:6px 12px; border-radius:20px; border:1.5px solid var(--border); background:white; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:11px; font-weight:600; cursor:pointer; color:var(--text-mid); }
-  .admin-filter-btn.active { background:var(--admin); border-color:var(--admin); color:white; }
-  .admin-nobat-item { background:white; border-radius:12px; padding:14px 16px; margin-bottom:10px; box-shadow:var(--shadow); border-right:4px solid var(--admin); }
-  .admin-row { display:flex; justify-content:space-between; align-items:center; }
-  .admin-patient-name { font-size:14px; font-weight:700; }
-  .admin-badge { background:var(--admin-light); color:var(--admin); padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; }
-  .admin-detail { font-size:11px; color:var(--text-soft); margin-top:6px; line-height:1.8; }
-  .admin-actions { display:flex; gap:6px; margin-top:10px; }
-  .btn-call { background:#e8f4f8; color:var(--primary); border:none; border-radius:6px; padding:6px 12px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:11px; font-weight:600; cursor:pointer; text-decoration:none; }
-  .export-btn { width:100%; background:var(--accent); color:white; border:none; border-radius:10px; padding:12px; font-family:'Vazirmatn',Tahoma,sans-serif; font-size:13px; font-weight:700; cursor:pointer; margin-top:8px; }
+  :root{--bg:#f7f9fc;--card:#fff;--primary:#1a6b8a;--primary-light:#e8f4f8;--accent:#27ae60;--accent-light:#eafaf1;--danger:#e74c3c;--danger-light:#fdf0ee;--admin:#7c3aed;--admin-light:#f3f0ff;--text:#1a2332;--text-mid:#4a5568;--text-soft:#8a9bb0;--border:#e2e8f0;--shadow:0 2px 12px rgba(0,0,0,0.08);}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Vazirmatn',Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+  header{background:var(--primary);padding:18px 20px;text-align:center;color:white;position:relative;}
+  header h1{font-size:17px;font-weight:700;}
+  header p{font-size:12px;opacity:.75;margin-top:3px;}
+  .admin-btn{position:absolute;left:14px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);border:none;color:white;border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer;font-family:'Vazirmatn',Tahoma,sans-serif;}
+  .tabs{display:flex;background:white;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10;}
+  .tab{flex:1;padding:14px 8px;text-align:center;font-size:13px;font-weight:600;color:var(--text-soft);cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;}
+  .tab.active{color:var(--primary);border-bottom-color:var(--primary);}
+  .page{display:none;padding:16px;}
+  .page.active{display:block;}
+  .doctor-cards{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+  .doctor-card{background:var(--card);border:2px solid var(--border);border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .2s;}
+  .doctor-card.selected{border-color:var(--primary);background:var(--primary-light);}
+  .doctor-name{font-size:14px;font-weight:700;}
+  .doctor-spec{font-size:12px;color:var(--text-soft);margin-top:3px;}
+  .doctor-time{font-size:11px;color:var(--primary);margin-top:6px;font-weight:600;}
+  .section-title{font-size:13px;font-weight:700;color:var(--text-mid);margin-bottom:10px;margin-top:4px;}
+  .date-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px;}
+  .date-btn{background:var(--card);border:1.5px solid var(--border);border-radius:10px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .2s;}
+  .date-btn.selected{border-color:var(--primary);background:var(--primary-light);}
+  .date-btn.disabled{opacity:.35;cursor:not-allowed;}
+  .date-btn.friday{background:#fff5f5;border-color:#fecaca;}
+  .date-btn.friday .date-day,.date-btn.friday .date-num{color:#e74c3c;font-weight:700;}
+  .date-day{font-size:11px;color:var(--text-soft);}
+  .date-num{font-size:15px;font-weight:700;margin-top:2px;}
+  .date-month{font-size:10px;color:var(--text-soft);margin-top:1px;}
+  .time-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px;}
+  .time-btn{background:var(--card);border:1.5px solid var(--border);border-radius:8px;padding:10px 4px;text-align:center;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text);}
+  .time-btn.selected{border-color:var(--primary);background:var(--primary-light);color:var(--primary);}
+  .time-btn.taken{background:#f5f5f5;color:#ccc;cursor:not-allowed;text-decoration:line-through;font-size:11px;}
+  .field{margin-bottom:14px;}
+  label{display:block;font-size:12px;color:var(--text-mid);margin-bottom:6px;font-weight:600;}
+  input{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:12px 14px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:14px;color:var(--text);outline:none;background:white;transition:border-color .2s;}
+  input:focus{border-color:var(--primary);}
+  .btn-primary{width:100%;background:var(--primary);color:white;border:none;border-radius:12px;padding:15px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .success-box{background:var(--accent-light);border:1.5px solid var(--accent);border-radius:12px;padding:20px;text-align:center;margin-top:16px;display:none;}
+  .success-box.show{display:block;}
+  .success-icon{font-size:36px;margin-bottom:8px;}
+  .success-title{font-size:15px;font-weight:700;color:var(--accent);}
+  .success-info{font-size:13px;color:var(--text-mid);margin-top:8px;line-height:1.9;}
+  .nobat-num-big{font-size:24px;font-weight:700;color:var(--primary);margin-top:10px;}
+  .divider-line{border:none;border-top:1px solid var(--border);margin:16px 0;}
+  .admin-login{max-width:340px;margin:40px auto;background:white;border-radius:16px;padding:32px 24px;box-shadow:var(--shadow);text-align:center;}
+  .admin-login .lock-icon{font-size:48px;margin-bottom:16px;}
+  .admin-login h2{font-size:16px;font-weight:700;color:var(--admin);margin-bottom:20px;}
+  .btn-admin{width:100%;background:var(--admin);color:white;border:none;border-radius:12px;padding:14px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+  .login-error{color:var(--danger);font-size:12px;margin-top:8px;display:none;}
+  .admin-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .admin-header h2{font-size:15px;font-weight:700;color:var(--admin);}
+  .btn-logout{background:var(--danger-light);color:var(--danger);border:none;border-radius:8px;padding:6px 12px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:11px;font-weight:600;cursor:pointer;}
+  .admin-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px;}
+  .admin-stat{background:var(--admin-light);border-radius:10px;padding:12px 8px;text-align:center;}
+  .admin-stat .num{font-size:22px;font-weight:700;color:var(--admin);}
+  .admin-stat .lbl{font-size:10px;color:var(--text-soft);margin-top:2px;}
+  .search-box{width:100%;border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:13px;outline:none;margin-bottom:12px;background:white;}
+  .admin-filter-row{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:4px;}
+  .admin-filter-btn{flex-shrink:0;padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:white;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:11px;font-weight:600;cursor:pointer;color:var(--text-mid);}
+  .admin-filter-btn.active{background:var(--admin);border-color:var(--admin);color:white;}
+  .admin-nobat-item{background:white;border-radius:12px;padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);border-right:4px solid var(--admin);}
+  .admin-row{display:flex;justify-content:space-between;align-items:center;}
+  .admin-patient-name{font-size:14px;font-weight:700;}
+  .admin-badge{background:var(--admin-light);color:var(--admin);padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .admin-detail{font-size:11px;color:var(--text-soft);margin-top:6px;line-height:1.8;}
+  .admin-actions{display:flex;gap:6px;margin-top:10px;}
+  .btn-call{background:#e8f4f8;color:var(--primary);border:none;border-radius:6px;padding:6px 12px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:11px;font-weight:600;cursor:pointer;text-decoration:none;display:inline-block;}
+  .btn-small{padding:5px 10px;border-radius:6px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:11px;font-weight:600;cursor:pointer;border:none;}
+  .btn-cancel{background:var(--danger-light);color:var(--danger);}
+  .empty-state{text-align:center;padding:40px 20px;color:var(--text-soft);}
+  .empty-state .icon{font-size:40px;margin-bottom:10px;}
+  .export-btn{width:100%;background:var(--accent);color:white;border:none;border-radius:10px;padding:12px;font-family:'Vazirmatn',Tahoma,sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-top:8px;}
+  .sync-badge{font-size:10px;padding:2px 8px;border-radius:10px;margin-right:8px;}
+  .sync-ok{background:#eafaf1;color:#27ae60;}
+  .sync-off{background:#fdf0ee;color:#e74c3c;}
 </style>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
@@ -138,11 +92,11 @@
   <button class="admin-btn" onclick="openAdmin()">⚙️ مدیریت</button>
 </header>
 
-<div class="tabs" id="main-tabs">
-  <div class="tab active" onclick="showPage('register', this)">ثبت نوبت</div>
+<div class="tabs">
+  <div class="tab active" onclick="showPage('register',this)">ثبت نوبت</div>
 </div>
 
-<!-- صفحه ثبت نوبت -->
+<!-- ثبت نوبت -->
 <div class="page active" id="page-register">
   <div class="section-title">انتخاب پزشک</div>
   <div class="doctor-cards">
@@ -189,12 +143,12 @@
     <div class="success-icon">✅</div>
     <div class="success-title">نوبت با موفقیت ثبت شد</div>
     <div class="success-info" id="success-info"></div>
-    <div class="nobat-num" id="success-num"></div>
+    <div class="nobat-num-big" id="success-num"></div>
     <button class="btn-primary" style="margin-top:14px" onclick="resetForm()">ثبت نوبت جدید</button>
   </div>
 </div>
 
-<!-- صفحه ورود مدیر -->
+<!-- ورود ادمین -->
 <div class="page" id="page-admin-login">
   <div class="admin-login">
     <div class="lock-icon">🔐</div>
@@ -205,22 +159,19 @@
   </div>
 </div>
 
-<!-- صفحه پنل مدیریت -->
+<!-- پنل ادمین -->
 <div class="page" id="page-admin">
   <div class="admin-header">
-    <h2>⚙️ پنل مدیریت</h2>
+    <h2>⚙️ پنل مدیریت <span class="sync-badge" id="sync-badge"></span></h2>
     <button class="btn-logout" onclick="adminLogout()">خروج</button>
   </div>
-
   <div class="admin-stats">
     <div class="admin-stat"><div class="num" id="adm-total">0</div><div class="lbl">کل نوبت‌ها</div></div>
     <div class="admin-stat"><div class="num" id="adm-doc0">0</div><div class="lbl">دکتر ادیب</div></div>
     <div class="admin-stat"><div class="num" id="adm-doc1">0</div><div class="lbl">دکتر حورزاد</div></div>
     <div class="admin-stat"><div class="num" id="adm-doc2">0</div><div class="lbl">دکتر بیکدلی</div></div>
   </div>
-
   <input class="search-box" type="text" id="admin-search" placeholder="🔍 جستجو نام یا موبایل..." oninput="renderAdmin()">
-
   <div class="admin-filter-row">
     <button class="admin-filter-btn active" onclick="setAdminFilter('all',this)">همه</button>
     <button class="admin-filter-btn" onclick="setAdminFilter('doc0',this)">دکتر ادیب</button>
@@ -228,143 +179,324 @@
     <button class="admin-filter-btn" onclick="setAdminFilter('doc2',this)">دکتر بیکدلی</button>
     <button class="admin-filter-btn" onclick="setAdminFilter('today',this)">امروز</button>
   </div>
-
   <div id="admin-list"></div>
   <button class="export-btn" onclick="exportCSV()">📥 خروجی اکسل (CSV)</button>
 </div>
 
 <script>
-  const DOCTORS = [
-    { name:'دکتر شادی ادیب', spec:'متخصص کودکان', day:0, start:10*60, end:13*60, dayName:'یکشنبه‌ها' },
-    { name:'دکتر مریم حورزاد', spec:'متخصص زنان', day:0, start:10*60, end:13*60, dayName:'یکشنبه‌ها' },
-    { name:'دکتر پگاه بیکدلی', spec:'متخصص داخلی', day:2, start:16*60, end:19*60, dayName:'سه‌شنبه‌ها' }
-  ];
-  const ADMIN_PASS = '1011';
-  const SLOT_INTERVAL = 10;
+const DOCTORS=[
+  {name:'دکتر شادی ادیب',spec:'متخصص کودکان',day:0,start:10*60,end:13*60},
+  {name:'دکتر مریم حورزاد',spec:'متخصص زنان',day:0,start:10*60,end:13*60},
+  {name:'دکتر پگاه بیکدلی',spec:'متخصص داخلی',day:2,start:16*60,end:19*60}
+];
+const ADMIN_PASS='1011';
+const SLOT_INTERVAL=10;
+const SB_URL='https://pkiwmpnopxiztneacrxa.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBraXdtcG5vcHhpenRuZWFjcnhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MzU2MDYsImV4cCI6MjA5ODAxMTYwNn0.NzJEbK_WyRDIqVRTdPaGRrYVL17ZsVjKVbatk4EaI0c';
 
-  // --- Supabase ---
-  const SUPABASE_URL = 'https://pkiwmpnopxiztneacrxa.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_bcWe5NMnevjPNUvOwetQ_g_DGVRzIgX';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let sb=null, sbOnline=false;
+try{ sb=supabase.createClient(SB_URL,SB_KEY); }catch(e){}
 
-  let selectedDoctor=null, selectedDate=null, selectedTime=null;
-  let nobats = [];
-  let adminFilter = 'all';
-  let adminLoggedIn = false;
+let selectedDoctor=null,selectedDate=null,selectedTime=null;
+let nobats=JSON.parse(localStorage.getItem('nobats')||'[]');
+let adminFilter='all',adminLoggedIn=false;
 
-  // بارگذاری اولیه نوبت‌ها
-  async function loadNobats() {
-    const { data, error } = await sb.from('nobats').select('*');
-    if(!error && data) nobats = data;
-  }
-  loadNobats();
-
-  // --- ناوبری ---
-  function showPage(p, tabEl) {
-    document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-    document.getElementById('page-'+p).classList.add('active');
-    if(tabEl) tabEl.classList.add('active');
-  }
-
-  function openAdmin() {
-    if(adminLoggedIn) {
-      showAdminPanel();
-    } else {
-      document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-      document.getElementById('page-admin-login').classList.add('active');
-      setTimeout(()=>document.getElementById('admin-pass').focus(),100);
+// بارگذاری از Supabase (اگر آنلاین بود)
+async function loadFromServer(){
+  if(!sb) return;
+  try{
+    const {data,error}=await Promise.race([
+      sb.from('nobats').select('*'),
+      new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),5000))
+    ]);
+    if(!error&&data){
+      nobats=data;
+      localStorage.setItem('nobats',JSON.stringify(nobats));
+      sbOnline=true;
     }
-  }
+  }catch(e){ sbOnline=false; }
+}
+loadFromServer();
 
-  function checkAdminPass() {
-    const pass = document.getElementById('admin-pass').value;
-    if(pass === ADMIN_PASS) {
-      adminLoggedIn = true;
-      document.getElementById('admin-pass').value = '';
-      document.getElementById('login-error').style.display = 'none';
-      showAdminPanel();
-    } else {
-      document.getElementById('login-error').style.display = 'block';
-      document.getElementById('admin-pass').value = '';
-      document.getElementById('admin-pass').focus();
+// ناوبری
+function showPage(p,tabEl){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  if(tabEl) tabEl.classList.add('active');
+}
+
+function openAdmin(){
+  if(adminLoggedIn){ showAdminPanel(); return; }
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-admin-login').classList.add('active');
+  setTimeout(()=>document.getElementById('admin-pass').focus(),100);
+}
+
+function checkAdminPass(){
+  if(document.getElementById('admin-pass').value===ADMIN_PASS){
+    adminLoggedIn=true;
+    document.getElementById('admin-pass').value='';
+    document.getElementById('login-error').style.display='none';
+    showAdminPanel();
+  }else{
+    document.getElementById('login-error').style.display='block';
+    document.getElementById('admin-pass').value='';
+  }
+}
+
+function showAdminPanel(){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-admin').classList.add('active');
+  renderAdmin();
+}
+
+function adminLogout(){
+  adminLoggedIn=false;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-register').classList.add('active');
+  document.querySelector('.tab').classList.add('active');
+}
+
+function setAdminFilter(f,btn){
+  adminFilter=f;
+  document.querySelectorAll('.admin-filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAdmin();
+}
+
+// انتخاب پزشک
+function selectDoctor(docIdx){
+  selectedDoctor=docIdx; selectedDate=null; selectedTime=null;
+  document.querySelectorAll('.doctor-card').forEach((c,i)=>c.classList.toggle('selected',i===docIdx));
+  document.getElementById('step3').style.display='none';
+  document.getElementById('step4').style.display='none';
+  buildDateGrid();
+  document.getElementById('step2').style.display='block';
+}
+
+// منطق قفل تاریخ
+function getTotalSlots(idx){ return Math.floor((DOCTORS[idx].end-DOCTORS[idx].start)/SLOT_INTERVAL); }
+
+function isDayUnlocked(dateKey,docIdx){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const prevDate=new Date(dateKey);
+  prevDate.setDate(prevDate.getDate()-7);
+  if(prevDate<today) return true;
+  const prevKey=prevDate.toISOString().split('T')[0];
+  const count=nobats.filter(n=>n.doctor===docIdx&&n.date===prevKey).length;
+  return count>=getTotalSlots(docIdx);
+}
+
+function buildDateGrid(){
+  const grid=document.getElementById('date-grid');
+  grid.innerHTML='';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const days=['یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه','شنبه'];
+  const months=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+  const doc=DOCTORS[selectedDoctor];
+
+  let firstDay=new Date(today);
+  while(firstDay.getDay()!==doc.day) firstDay.setDate(firstDay.getDate()+1);
+  const firstKey=firstDay.toISOString().split('T')[0];
+
+  for(let i=0;i<28;i++){
+    const d=new Date(today); d.setDate(today.getDate()+i);
+    const jsDay=d.getDay();
+    const isDocDay=jsDay===doc.day;
+    const isFriday=jsDay===5;
+    const jalali=toJalali(d.getFullYear(),d.getMonth()+1,d.getDate());
+    const dateKey=d.toISOString().split('T')[0];
+    let isLocked=false;
+    if(isDocDay&&dateKey!==firstKey) isLocked=!isDayUnlocked(dateKey,selectedDoctor);
+    const btn=document.createElement('div');
+    let cls='date-btn';
+    if(!isDocDay||isLocked) cls+=' disabled';
+    if(isFriday) cls+=' friday';
+    btn.className=cls;
+    btn.innerHTML=`<div class="date-day">${days[jsDay]}${isLocked?' 🔒':''}</div><div class="date-num">${toFarsiNum(jalali[2])}</div><div class="date-month">${months[jalali[1]-1]}</div>`;
+    if(isDocDay&&!isLocked) btn.onclick=()=>selectDate(dateKey,btn);
+    grid.appendChild(btn);
+  }
+}
+
+function selectDate(dateKey,btn){
+  selectedDate=dateKey; selectedTime=null;
+  document.querySelectorAll('.date-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('step4').style.display='none';
+  buildTimeGrid();
+  document.getElementById('step3').style.display='block';
+}
+
+function buildTimeGrid(){
+  const grid=document.getElementById('time-grid');
+  grid.innerHTML='';
+  const doc=DOCTORS[selectedDoctor];
+  const taken=nobats.filter(n=>n.doctor===selectedDoctor&&n.date===selectedDate).map(n=>n.time);
+  for(let m=doc.start;m<doc.end;m+=SLOT_INTERVAL){
+    const h=Math.floor(m/60),min=m%60;
+    const t=`${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}`;
+    const isTaken=taken.includes(t);
+    const btn=document.createElement('div');
+    btn.className='time-btn'+(isTaken?' taken':'');
+    btn.textContent=isTaken?'✗':t;
+    if(!isTaken) btn.onclick=()=>selectTime(t,btn);
+    grid.appendChild(btn);
+  }
+}
+
+function selectTime(time,btn){
+  selectedTime=time;
+  document.querySelectorAll('.time-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('step4').style.display='block';
+}
+
+async function submitNobat(){
+  const name=document.getElementById('inp-name').value.trim();
+  const phone=document.getElementById('inp-phone').value.trim();
+  if(!name){alert('لطفاً نام بیمار را وارد کنید');return;}
+  if(!phone||phone.length<10){alert('لطفاً شماره موبایل را وارد کنید');return;}
+
+  const nobatNum=nobats.filter(n=>n.doctor===selectedDoctor&&n.date===selectedDate).length+1;
+  const record={doctor:selectedDoctor,date:selectedDate,time:selectedTime,name,phone,nobat_num:nobatNum};
+
+  if(sb&&sbOnline){
+    try{
+      const{data,error}=await sb.from('nobats').insert([record]).select().single();
+      if(!error&&data){ nobats.push(data); localStorage.setItem('nobats',JSON.stringify(nobats)); }
+      else throw error;
+    }catch(e){
+      record.id=Date.now();
+      nobats.push(record);
+      localStorage.setItem('nobats',JSON.stringify(nobats));
     }
+  }else{
+    record.id=Date.now();
+    nobats.push(record);
+    localStorage.setItem('nobats',JSON.stringify(nobats));
   }
 
-  function showAdminPanel() {
-    document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-    document.getElementById('page-admin').classList.add('active');
-    renderAdmin();
+  const doc=DOCTORS[selectedDoctor];
+  document.getElementById('success-info').innerHTML=`${doc.name} · ${doc.spec}<br>${formatJalaliDate(selectedDate)} · ساعت ${selectedTime}<br>👤 ${name}<br>📱 ${phone}`;
+  document.getElementById('success-num').textContent=`نوبت شماره ${toFarsiNum(nobatNum)}`;
+  document.getElementById('step2').style.display='none';
+  document.getElementById('success-box').classList.add('show');
+}
+
+function resetForm(){
+  selectedDoctor=null; selectedDate=null; selectedTime=null;
+  document.querySelectorAll('.doctor-card').forEach(c=>c.classList.remove('selected'));
+  ['step2','step3','step4'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('success-box').classList.remove('show');
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-phone').value='';
+}
+
+async function renderAdmin(){
+  if(sb){
+    try{
+      const{data,error}=await Promise.race([
+        sb.from('nobats').select('*').order('date').order('time'),
+        new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),5000))
+      ]);
+      if(!error&&data){ nobats=data; localStorage.setItem('nobats',JSON.stringify(nobats)); sbOnline=true; }
+    }catch(e){ sbOnline=false; }
   }
 
-  function adminLogout() {
-    adminLoggedIn = false;
-    document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-    document.getElementById('page-register').classList.add('active');
-    document.querySelector('.tab').classList.add('active');
+  const badge=document.getElementById('sync-badge');
+  if(sbOnline){ badge.className='sync-badge sync-ok'; badge.textContent='🟢 آنلاین'; }
+  else{ badge.className='sync-badge sync-off'; badge.textContent='🔴 آفلاین'; }
+
+  const search=document.getElementById('admin-search').value.trim().toLowerCase();
+  const today=new Date().toISOString().split('T')[0];
+  let list=[...nobats].sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time));
+  if(adminFilter==='doc0') list=list.filter(n=>n.doctor===0);
+  if(adminFilter==='doc1') list=list.filter(n=>n.doctor===1);
+  if(adminFilter==='doc2') list=list.filter(n=>n.doctor===2);
+  if(adminFilter==='today') list=list.filter(n=>n.date===today);
+  if(search) list=list.filter(n=>n.name.toLowerCase().includes(search)||n.phone.includes(search));
+
+  document.getElementById('adm-total').textContent=nobats.length;
+  document.getElementById('adm-doc0').textContent=nobats.filter(n=>n.doctor===0).length;
+  document.getElementById('adm-doc1').textContent=nobats.filter(n=>n.doctor===1).length;
+  document.getElementById('adm-doc2').textContent=nobats.filter(n=>n.doctor===2).length;
+
+  const container=document.getElementById('admin-list');
+  if(list.length===0){ container.innerHTML='<div class="empty-state"><div class="icon">📋</div><p>نوبتی یافت نشد</p></div>'; return; }
+  container.innerHTML=list.map(n=>`
+    <div class="admin-nobat-item">
+      <div class="admin-row">
+        <div class="admin-patient-name">${n.name}</div>
+        <div class="admin-badge">نوبت ${toFarsiNum(n.nobat_num||n.nobatNum||1)}</div>
+      </div>
+      <div class="admin-detail">
+        🩺 ${DOCTORS[n.doctor].name}<br>
+        📅 ${formatJalaliDate(n.date)} · ⏰ ${n.time}<br>
+        📱 ${n.phone}
+      </div>
+      <div class="admin-actions">
+        <a class="btn-call" href="tel:${n.phone}">📞 تماس</a>
+        <button class="btn-small btn-cancel" onclick="adminCancel(${n.id})">لغو نوبت</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function adminCancel(id){
+  if(!confirm('نوبت لغو شود؟')) return;
+  if(sb&&sbOnline){
+    try{ await sb.from('nobats').delete().eq('id',id); }catch(e){}
   }
+  nobats=nobats.filter(n=>n.id!==id);
+  localStorage.setItem('nobats',JSON.stringify(nobats));
+  renderAdmin();
+}
 
-  function setAdminFilter(f, btn) {
-    adminFilter = f;
-    document.querySelectorAll('.admin-filter-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    renderAdmin();
-  }
+function exportCSV(){
+  if(nobats.length===0){alert('نوبتی برای خروجی وجود ندارد');return;}
+  const rows=[['نام','موبایل','پزشک','تاریخ','ساعت','شماره نوبت']];
+  nobats.forEach(n=>rows.push([n.name,n.phone,DOCTORS[n.doctor].name,formatJalaliDate(n.date),n.time,n.nobat_num||n.nobatNum||1]));
+  const csv='\uFEFF'+rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='nobat-list.csv';
+  a.click();
+}
 
-  // --- ثبت نوبت ---
-  function selectDoctor(idx) {
-    selectedDoctor=idx; selectedDate=null; selectedTime=null;
-    document.querySelectorAll('.doctor-card').forEach((c,i)=>c.classList.toggle('selected',i===idx));
-    document.getElementById('step3').style.display='none';
-    document.getElementById('step4').style.display='none';
-    buildDateGrid();
-    document.getElementById('step2').style.display='block';
-  }
+function toJalali(gy,gm,gd){
+  const jmd=[31,31,31,31,31,31,30,30,30,30,30,29];
+  const g_y=gy-1600,g_m=gm-1,g_d=gd-1;
+  let g_d_no=365*g_y+Math.floor((g_y+3)/4)-Math.floor((g_y+99)/100)+Math.floor((g_y+399)/400);
+  const gm2=[31,28,31,30,31,30,31,31,30,31,30,31];
+  for(let i=0;i<g_m;i++) g_d_no+=gm2[i];
+  if(g_m>1&&((gy%4===0&&gy%100!==0)||gy%400===0)) g_d_no++;
+  g_d_no+=g_d;
+  let j=g_d_no-79;
+  const j_np=Math.floor(j/12053); j%=12053;
+  let jy=979+33*j_np+4*Math.floor(j/1461);
+  j%=1461;
+  if(j>=366){jy+=Math.floor((j-1)/365);j=(j-1)%365;}
+  let jm=0,jd=0;
+  for(let i=0;i<11&&j>=jmd[i];i++){j-=jmd[i];jm=i+1;}
+  jd=j+1;
+  return[jy,jm+1,jd];
+}
 
-  // تعداد اسلات هر پزشک
-  function getTotalSlots(docIdx) {
-    const doc = DOCTORS[docIdx];
-    return Math.floor((doc.end - doc.start) / SLOT_INTERVAL);
-  }
+function formatJalaliDate(dateStr){
+  const d=new Date(dateStr);
+  const j=toJalali(d.getFullYear(),d.getMonth()+1,d.getDate());
+  const months=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+  return `${toFarsiNum(j[2])} ${months[j[1]-1]} ${toFarsiNum(j[0])}`;
+}
 
-  // بررسی باز بودن روز بر اساس روز قبلی همان پزشک
-  function isDayUnlocked(dateKey, docIdx) {
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const docDay = DOCTORS[docIdx].day;
-    const thisDate = new Date(dateKey);
-    // روز مشابه قبلی (7 روز قبل)
-    const prevDate = new Date(thisDate);
-    prevDate.setDate(thisDate.getDate() - 7);
-    const prevKey = prevDate.toISOString().split('T')[0];
-
-    // اگر روز قبلی گذشته → باز
-    if(prevDate < today) return true;
-
-    // اگر نوبت‌های روز قبلی این پزشک پر شده → باز
-    const count = nobats.filter(n=>n.doctor===docIdx&&(n.date===prevKey||n.date===prevKey)).length;
-    if(count >= getTotalSlots(docIdx)) return true;
-
-    return false;
-  }
-
-  function buildDateGrid() {
-    const grid=document.getElementById('date-grid');
-    grid.innerHTML='';
-    const today=new Date();
-    today.setHours(0,0,0,0);
-    const days=['یک‌شنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنج‌شنبه','جمعه','شنبه'];
-    const months=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-    const doc = DOCTORS[selectedDoctor];
-
-    // اولین روز کاری این پزشک
-    let firstDay = new Date(today);
-    while(firstDay.getDay() !== doc.day) firstDay.setDate(firstDay.getDate()+1);
-    const firstDayKey = firstDay.toISOString().split('T')[0];
-
-    for(let i=0;i<28;i++){
-      const d=new Date(today);
-     
+function toFarsiNum(n){
+  return String(n).replace(/\d/g,d=>'۰۱۲۳۴۵۶۷۸۹'[d]);
+}
+</script>
+</body>
+</html>
